@@ -1,0 +1,58 @@
+Purpose: This directory can be used to run a task array for AlphaFold 3 interaction predictions between a target protein and msa-free binders, with folders used as inputs so that multiple AlphaFold 3 jobs can run on the same gpu. Predict the interaction between designed binders and MmpL3 using AlphaFold 3. Here, the msa for MmpL3 is used, but the binder does not utilize an msa in order to save computational time while screening thousands of binder candidates. Due to this, there is also no paired msa. Generate AlphaFold 3 outputs and extract the minimum predicted aligned error (min PAE) of interaction.
+****The difference between this repository and AF3_task_array_template is that here, multiple AlphaFold 3 jobs run on one gpu, as folders are provided as input instead of individual jsons. 
+
+Step 1: Generate mmpL3 multiple sequence alignment
+
+sbatch prep_for_msa.sh
+
+-In the make_msa folder, a .fa file outputed from ProteinMPNN (for example, 250226_mmpl3_AF-A0QP27_run5_design_ppi_946_aligned.fa) is used as an input to the make_msa_sep_fastas_and_gen_jsons_multichain.py script. The script changes the .fa file into individual fasta files, one fasta per sequence contained within the .fa. It also produces a .json file containing the parameters with which to run AlphaFold. Running sbatch prep_for_msa.sh runs the make_msa_sep_fastas_and_gen_jsons_multichain.py script. 
+
+sbatch run_AF3.sh
+
+-I then run the run_AF3.sh file to run AlphaFold for one of the sequences, providing it one of the .json files as an input. 
+
+Step 2: Produce input .json files for AlphaFold
+
+-Within the sep_fastas_and_gen_jsons_multichain.py, add the path to the output data.json file from AlphaFold (which was previously produced in Step 1). This will make it so that the MSA for MmpL3 is added to the .json file for each binder.
+
+-Ensure that the 'chain' variable is the chain of the MSA in the data.json which you want to copy and paste.
+
+-Ensure that the correct sequence of MmpL3 is present in sep_fastas_and_gen_jsons_multichain.py. 
+
+sbatch prep_multichain_1.sh
+
+-Run the sep_fastas_and_gen_jsons_multichain.py script. This will split all the .fa files for all of the binder sequences into individual fasta files, and produce .json files containing the parameters with which to run AlphaFold.
+
+Step 3: Run AlphaFold
+
+python Make_AF3_folder_array.py
+
+-This will divide the folder of jsons into smaller subfolders. For every subfolder, a shell script is made to run AlphaFold using that subfolder as an input directory. One master shell script titled 'launch_all.sh' contains the commands to submit each of the individual shell scripts that will run AlphaFold 3. The script will sleep and try again later if a submission fails. All of the shell scripts, including launch_all.sh, are placed in a new folder titled Launch_AF3. To change the output folder name or parameters of the slurm job, edit the corresponding portions of the Make_AF3_folder_array.py script.
+
+-If, by accident, you needed to perform this step again, you can return all of the json files into their original folder using move_jsons_one_folder.py in the Optional_if_needed folder. Then you can manually (or using wild cards) delete any folders you do not need/want.
+
+sbatch launch_all.sh
+
+-This will submit each run_AF3_[] shell script. If the slurm scheduler does not accept the job, it will sleep for 2 minutes and then retry until the job is accepted. 
+
+-AF3 will run, with each json folder being one AF3 job.
+
+Step 4: Calculate min PAE (minimum predicted aligned error of interaction)
+
+-After AlphaFold has finished running, generate a spreadsheet containing the min PAE values for all predictions.
+
+-Edit the Get_min_pae_script.py script so that it operates on the folder containing all of the AlphaFold outputs.
+
+sbatch run_get_min_pae.sh
+
+-This generates a .csv file containing the min PAE values for each AlphaFold prediction. This can be sorted lowest to highest on excel to easily view the binders with lowest min PAE.
+
+Step 5 (optional) view hit designs
+
+-Edit the corresponding paths in copy_good_outputs.py. 
+
+sbatch copy_good_outputs.sh
+
+-This will copy the AF3 output folders for hit designs into their own folder so that it is easy to access them and look through the results.
+
+SJ 1/07/26
