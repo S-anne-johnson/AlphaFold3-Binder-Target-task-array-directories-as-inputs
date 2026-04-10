@@ -1,5 +1,5 @@
 Purpose: This directory can be used to run a task array for AlphaFold 3 interaction predictions between a target protein and msa-free binders, with folders used as inputs so that multiple AlphaFold 3 jobs can run on the same gpu. Predict the interaction between designed binders and MmpL3 using AlphaFold 3. Here, the msa for MmpL3 is used, but the binder does not utilize an msa in order to save computational time while screening thousands of binder candidates. Due to this, there is also no paired msa. Generate AlphaFold 3 outputs and extract the minimum predicted aligned error (min PAE) of interaction.
-****The difference between this repository and AF3_task_array_template is that here, multiple AlphaFold 3 jobs run on one gpu, as folders are provided as input instead of individual jsons. 
+****The difference between this repository and AlphaFold3-Binder-Target-protein-task-array is that here, multiple AlphaFold 3 jobs run on one gpu, as folders are provided as input instead of individual jsons. 
 
 Step 1: Generate mmpL3 multiple sequence alignment
 
